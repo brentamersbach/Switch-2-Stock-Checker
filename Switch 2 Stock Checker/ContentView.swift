@@ -9,14 +9,18 @@ import SwiftUI
 import AudioToolbox
 
 struct ContentView: View {
-    @State private var contentText: String = ""
-    @State private var status: Bool = false
     let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+    let walmartURL: URL = URL(string: "https://www.walmart.com/ip/Nintendo-Switch-2-System/15949610846")!
+    @State private var walmartStatus: Bool = false
+    let targetURL: URL = URL(string: "https://www.target.com/p/nintendo-switch-2-console/-/A-94693225")!
+    @State private var targetStatus: Bool = false
     
-    func grabResults() async {
-        let walmartURL: URL = URL(string: "https://www.walmart.com/ip/Nintendo-Switch-2-System/15949610846")!
-        print("URL: \(walmartURL.absoluteString)")
+    func grabResults(for url: URL) async -> Bool {
+        print("URL: \(url.absoluteString)")
+        
+        var contentText: String = ""
         var result: String = ""
+        
         do {
             let (requestData, _) = try await URLSession.shared.data(from: walmartURL)
             if let requestString = String(data: requestData, encoding: .utf8) {
@@ -26,19 +30,20 @@ struct ContentView: View {
             print(error.localizedDescription)
         }
         contentText = result
+        
         if contentText.contains("Out of stock") {
-            status = false
-//            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
+            return false
         } else {
-            status = true
             AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
+            return true
         }
     }
     
     func refreshData() {
+        print("Timer fired")
         Task {
-            print("Timer fired")
-            await grabResults()
+            walmartStatus = await grabResults(for: walmartURL)
+            targetStatus = await grabResults(for: targetURL)
         }
     }
     
@@ -46,27 +51,26 @@ struct ContentView: View {
         VStack(alignment:.leading) {
             HStack {
                 Text("Walmart: ")
-                if status == false {
-                    HStack {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 10, height: 10)
-                        Text("Unavailable")
-                            .bold()
-                    }
+                Spacer()
+                if walmartStatus == false {
+                    AvailableView()
                 } else {
-                    HStack {
-                        Circle()
-                            .fill(Color.green)
-                        Text("Available")
-                            .bold()
-                    }
+                    UnavailableView()
+                }
+            }
+            HStack {
+                Text("Target: ")
+                Spacer()
+                if targetStatus == false {
+                    AvailableView()
+                } else {
+                    UnavailableView()
                 }
             }
         }
         .frame(width: 200, height: 200)
         .task {
-            await grabResults()
+            refreshData()
         }
         .onReceive(timer) { _ in
             refreshData()
