@@ -13,5 +13,6 @@ struct Switch_2_Stock_CheckerApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowResizability(.contentSize)
     }
 }
