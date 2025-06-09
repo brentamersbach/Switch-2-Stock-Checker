@@ -12,6 +12,7 @@ struct AvailableView: View {
         HStack {
             Circle()
                 .fill(Color.green)
+                .frame(width: 10, height: 10)
             Text("Available")
                 .bold()
         }

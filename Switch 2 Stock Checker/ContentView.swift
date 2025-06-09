@@ -29,9 +29,14 @@ struct ContentView: View {
         
         var contentText: String = ""
         var result: String = ""
+        var statusCode: Int = 0
         
         do {
-            let (requestData, _) = try await URLSession.shared.data(from: walmartURL)
+            let (requestData, requestResponse) = try await URLSession.shared.data(from: walmartURL)
+            if let requestResponse = requestResponse as? HTTPURLResponse {
+                statusCode = requestResponse.statusCode
+                print("Status: \(statusCode)")
+            }
             if let requestString = String(data: requestData, encoding: .utf8) {
                 result = requestString
             }
@@ -40,6 +45,9 @@ struct ContentView: View {
         }
         contentText = result
         
+        if statusCode != 200 {
+            return false
+        }
         if contentText.lowercased().contains("out of stock") || contentText.lowercased().contains("not available") || contentText.lowercased().contains("in store only") {
             return false
         } else {
