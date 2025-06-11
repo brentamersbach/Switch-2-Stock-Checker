@@ -27,6 +27,10 @@ struct ContentView: View {
     @State private var bestBuyStatus: Bool = false
     @AppStorage("bestBuySound") var bestBuySound: Bool = true
     
+    let gameStopURL: URL = URL(string: "https://www.gamestop.com/consoles-hardware/nintendo-switch/consoles/products/nintendo-switch-2/20019700.html")!
+    @State private var gameStopStatus: Bool = false
+    @AppStorage("gameStopSound") var gameStopSound: Bool = true
+    
     let verizonURL: URL = URL(string: "https://www.verizon.com/products/nintendo-switch-2-light-blue-and-light-red/")!
     @State private var verizonStatus: Bool = false
     @AppStorage("verizonSound") var verizonSound: Bool = true
@@ -60,7 +64,7 @@ struct ContentView: View {
             return false
         }
         if let result = result {
-            if result.lowercased().contains("out of stock") || result.lowercased().contains("not available") || result.lowercased().contains("in store only") {
+            if result.lowercased().contains("out of stock") || result.lowercased().contains("not available") || result.lowercased().contains("in store only") || result.lowercased().contains("exclusively in stores") {
                 return false
             } else {
                 #if DEBUG
@@ -83,6 +87,7 @@ struct ContentView: View {
             walmartStatus = await grabResults(for: walmartURL, withSound: walmartSound)
             targetStatus = await grabResults(for: targetURL, withSound: targetSound)
             bestBuyStatus = await grabResults(for: bestBuyURL, withSound: bestBuySound)
+            gameStopStatus = await grabResults(for: gameStopURL, withSound: gameStopSound)
             verizonStatus = await grabResults(for: verizonURL, withSound: verizonSound)
         }
     }
@@ -124,6 +129,18 @@ struct ContentView: View {
                 Link("Go", destination: bestBuyURL)
                     .focusable(false)
                 Toggle("\(speakerImage)", isOn: $bestBuySound)
+            }
+            HStack {
+                Text("GameStop: ")
+                Spacer()
+                if gameStopStatus == false {
+                    UnavailableView()
+                } else {
+                    AvailableView()
+                }
+                Link("Go", destination: gameStopURL)
+                    .focusable(false)
+                Toggle("\(speakerImage)", isOn: $gameStopSound)
             }
             HStack {
                 Text("Verizon: ")
