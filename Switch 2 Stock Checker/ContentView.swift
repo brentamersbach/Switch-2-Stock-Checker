@@ -14,6 +14,8 @@ struct ContentView: View {
     #else
     let timer = Timer.publish(every: 300, on: .main, in: .common).autoconnect()
     #endif
+    
+    let unavailablePhrases: [String] = ["confirm that you’re human", "out of stock", "not available", "in store only", "exclusively in stores"]
         
     let walmartURL: URL = URL(string: "https://www.walmart.com/ip/Nintendo-Switch-2-System/15949610846")!
     @State private var walmartStatus: Bool = false
@@ -40,7 +42,9 @@ struct ContentView: View {
     let speakerImage = Image(systemName: "speaker.wave.3")
     
     func grabResults(for url: URL, withSound: Bool = true) async -> Bool {
+        #if DEBUG
         print("URL: \(url.absoluteString)")
+        #endif
         
         var result: String? = ""
         var statusCode: Int = 0
@@ -49,7 +53,9 @@ struct ContentView: View {
             let (requestData, requestResponse) = try await URLSession.shared.data(from: url)
             if let requestResponse = requestResponse as? HTTPURLResponse {
                 statusCode = requestResponse.statusCode
+                #if DEBUG
                 print("Status: \(statusCode)")
+                #endif
             }
             if let requestString = String(data: requestData, encoding: .utf8) {
                 result = requestString
@@ -63,22 +69,53 @@ struct ContentView: View {
         if statusCode != 200 {
             return false
         }
-        if let result = result {
-            if result.lowercased().contains("out of stock") || result.lowercased().contains("not available") || result.lowercased().contains("in store only") || result.lowercased().contains("exclusively in stores") {
-                return false
-            } else {
-                #if DEBUG
-                print(result)
-                #endif
-                
-                if withSound {
-                    AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
+        if var result = result {
+            result = result.lowercased()
+            for phrase in unavailablePhrases {
+                if result.contains(phrase) {
+                    return false
                 }
-                return true
             }
+           
+            #if DEBUG
+            print("Hit!")
+            #endif
+            writeLog(for: result, of: url)
+            
+            if withSound {
+                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
+            }
+            return true
+            
         } else {
             return false
         }
+    }
+    
+    func writeLog(for contents: String, of url: URL) {
+        let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        let supportPath = paths[0].appending(component: "com.mac-anu.Switch-2-Stock-Checker")
+        let dateFormat = Date.ISO8601FormatStyle(dateSeparator: .omitted, dateTimeSeparator: .space, timeSeparator: .omitted, timeZone: TimeZone.current)
+        let date = Date().formatted(dateFormat)
+        let site = url.absoluteString.split(separator: ".")[1]
+        let filename = "\(site) \(date).txt"
+        let filepath = supportPath.appending(component: filename)
+        print(filepath)
+        
+        if !FileManager.default.fileExists(atPath: supportPath.absoluteString) {
+            do {
+                try FileManager.default.createDirectory(at: supportPath, withIntermediateDirectories: true)
+            } catch {
+                print("Directory creation failed: \(error.localizedDescription)")
+            }
+        }
+        
+        do {
+            try contents.write(to: filepath, atomically: true, encoding: String.Encoding.utf8)
+        } catch {
+            print("Write to file failed: \(error.localizedDescription)")
+        }
+        
     }
     
     func refreshData() {
