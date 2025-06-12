@@ -37,7 +37,7 @@ struct ContentView: View {
     @State private var verizonStatus: Bool = false
     @AppStorage("verizonSound") var verizonSound: Bool = true
     
-    @AppStorage("enableSound") var enableSound: Bool = true
+    @AppStorage("enableLogging") var enableLogging: Bool = false
     
     let speakerImage = Image(systemName: "speaker.wave.3")
     
@@ -80,7 +80,10 @@ struct ContentView: View {
             #if DEBUG
             print("Hit!")
             #endif
-            writeLog(for: result, of: url)
+            
+            if enableLogging {
+                writeLog(for: result, of: url)
+            }
             
             if withSound {
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
@@ -119,7 +122,9 @@ struct ContentView: View {
     }
     
     func refreshData() {
+        #if DEBUG
         print("Timer fired")
+        #endif
         Task {
             walmartStatus = await grabResults(for: walmartURL, withSound: walmartSound)
             targetStatus = await grabResults(for: targetURL, withSound: targetSound)
@@ -191,6 +196,8 @@ struct ContentView: View {
                     .focusable(false)
                 Toggle("\(speakerImage)", isOn: $verizonSound)
             }
+            Toggle("Enable logging", isOn: $enableLogging)
+                .padding(.top)
         }
         .frame(width: 250)
         .task {
