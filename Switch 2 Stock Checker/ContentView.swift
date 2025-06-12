@@ -118,7 +118,6 @@ struct ContentView: View {
         } catch {
             print("Write to file failed: \(error.localizedDescription)")
         }
-        
     }
     
     func refreshData() {
