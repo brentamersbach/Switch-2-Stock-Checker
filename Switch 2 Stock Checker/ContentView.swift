@@ -15,6 +15,14 @@ struct ContentView: View {
     let timer = Timer.publish(every: 300, on: .main, in: .common).autoconnect()
     #endif
     
+    @State private var retailers: [Retailer] = [
+        Retailer(named: "Walmart", withURL: "https://www.walmart.com/ip/Nintendo-Switch-2-System/15949610846"),
+        Retailer(named: "Target", withURL: "https://www.target.com/p/nintendo-switch-2-console/-/A-94693225"),
+        Retailer(named: "Best Buy", withURL: "https://www.bestbuy.com/site/nintendo-switch-2-system-nintendo-switch-2/6614313.p?skuId=6614313"),
+        Retailer(named: "GameStop", withURL: "https://www.gamestop.com/consoles-hardware/nintendo-switch/consoles/products/nintendo-switch-2/20019700.html"),
+        Retailer(named: "Verizon", withURL: "https://www.verizon.com/products/nintendo-switch-2-light-blue-and-light-red/")
+    ]
+    
     let unavailablePhrases: [String] = ["confirm that you’re human", "out of stock", "not available", "in store only", "exclusively in stores"]
         
     let walmartURL: URL = URL(string: "https://www.walmart.com/ip/Nintendo-Switch-2-System/15949610846")!
@@ -125,16 +133,33 @@ struct ContentView: View {
         print("Timer fired")
         #endif
         Task {
-            walmartStatus = await grabResults(for: walmartURL, withSound: walmartSound)
-            targetStatus = await grabResults(for: targetURL, withSound: targetSound)
-            bestBuyStatus = await grabResults(for: bestBuyURL, withSound: bestBuySound)
-            gameStopStatus = await grabResults(for: gameStopURL, withSound: gameStopSound)
-            verizonStatus = await grabResults(for: verizonURL, withSound: verizonSound)
+            for retailer in retailers {
+//                await retailer.grabResults(withSound: retailer.soundEnabled, withLogging: enableLogging)
+            }
+//            walmartStatus = await grabResults(for: walmartURL, withSound: walmartSound)
+//            targetStatus = await grabResults(for: targetURL, withSound: targetSound)
+//            bestBuyStatus = await grabResults(for: bestBuyURL, withSound: bestBuySound)
+//            gameStopStatus = await grabResults(for: gameStopURL, withSound: gameStopSound)
+//            verizonStatus = await grabResults(for: verizonURL, withSound: verizonSound)
         }
     }
     
     var body: some View {
         VStack(alignment:.leading) {
+            ForEach($retailers) { $retailer in
+                HStack {
+                    Text("\(retailer.name): ")
+                    Spacer()
+                    if retailer.isAvailable.wrappedValue == false {
+                        UnavailableView()
+                    } else {
+                        AvailableView()
+                    }
+                    Link("Go", destination: retailer.url.wrappedValue)
+                        .focusable(false)
+                    Toggle("\(speakerImage)", isOn: retailer.enableSound)
+                }
+            }
             HStack {
                 Text("Walmart: ")
                 Spacer()

@@ -7,20 +7,24 @@
 
 import Foundation
 import AudioToolbox
+import SwiftUI
 
-class Retailer: Identifiable {
+struct Retailer: Identifiable {
     let id = UUID()
     var name: String
     var url: URL
-    @Published var soundEnabled: Bool = false
-    let unavailablePhrases: [String] = ["confirm that you’re human", "out of stock", "not available", "in store only", "exclusively in stores"]
+    var soundEnabled: Bool
+    var isAvailable: Bool
+    private let unavailablePhrases: [String] = ["confirm that you’re human", "out of stock", "not available", "in store only", "exclusively in stores"]
     
     init(named name: String, withURL url: String) {
         self.name = name
         self.url = URL(string: url)!
+        self.isAvailable = false
+        self.soundEnabled = false
     }
     
-    func grabResults(for url: URL, withSound: Bool = true, withLogging enableLogging: Bool) async -> Bool {
+    mutating func grabResults(withSound: Bool = true, withLogging enableLogging: Bool) async -> Bool {
         #if DEBUG
         print("URL: \(url.absoluteString)")
         #endif
@@ -46,12 +50,14 @@ class Retailer: Identifiable {
         }
         
         if statusCode != 200 {
+            self.isAvailable = false
             return false
         }
         if var result = result {
             result = result.lowercased()
             for phrase in unavailablePhrases {
                 if result.contains(phrase) {
+                    self.isAvailable = false
                     return false
                 }
             }
@@ -67,9 +73,11 @@ class Retailer: Identifiable {
             if withSound {
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
             }
+            self.isAvailable = true
             return true
-            
+
         } else {
+            self.isAvailable = false
             return false
         }
     }
