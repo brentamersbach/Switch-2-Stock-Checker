@@ -29,7 +29,7 @@ class Retailer: Identifiable {
         print("URL: \(url.absoluteString)")
         #endif
         
-        var result: String? = ""
+        var content: String? = ""
         var statusCode: Int = 0
         
         do {
@@ -41,41 +41,35 @@ class Retailer: Identifiable {
                 #endif
             }
             if let requestString = String(data: requestData, encoding: .utf8) {
-                result = requestString
+                content = requestString
             } else {
-                result = nil
+                content = nil
             }
         } catch {
             print(error.localizedDescription)
         }
-        
-        if statusCode != 200 {
-            self.isAvailable = false
-        }
-        if var result = result {
-            result = result.lowercased()
-            for phrase in unavailablePhrases {
-                if result.contains(phrase) {
-                    self.isAvailable = false
+        var result = false
+        if statusCode == 200 {
+            if let content = content?.lowercased() {
+                for phrase in unavailablePhrases {
+                    if content.contains(phrase) {
+                        return
+                    }
                 }
-            }
-           
-            #if DEBUG
-            print("Hit!")
-            #endif
-            
-            if enableLogging {
-                writeLog(for: result, of: url)
-            }
-            
-            if self.soundEnabled {
-                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
-            }
-            self.isAvailable = true
+                #if DEBUG
+                print("Hit!")
+                #endif
 
-        } else {
-            self.isAvailable = false
+                if enableLogging {
+                    writeLog(for: content, of: url)
+                }
+                if self.soundEnabled {
+                    AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
+                }
+                result = true
+            }
         }
+        self.isAvailable = result
     }
     
     func writeLog(for contents: String, of url: URL) {
