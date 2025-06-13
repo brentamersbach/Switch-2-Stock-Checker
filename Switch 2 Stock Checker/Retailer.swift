@@ -9,11 +9,11 @@ import Foundation
 import AudioToolbox
 import SwiftUI
 
-struct Retailer: Identifiable {
+class Retailer: Identifiable {
     let id = UUID()
     var name: String
     var url: URL
-    var soundEnabled: Bool
+    @AppStorage var soundEnabled: Bool
     var isAvailable: Bool
     private let unavailablePhrases: [String] = ["confirm that you’re human", "out of stock", "not available", "in store only", "exclusively in stores"]
     
@@ -21,10 +21,10 @@ struct Retailer: Identifiable {
         self.name = name
         self.url = URL(string: url)!
         self.isAvailable = false
-        self.soundEnabled = false
+        self._soundEnabled = AppStorage(wrappedValue: true, "\(name).soundEnabled")
     }
     
-    mutating func grabResults(withSound: Bool = true, withLogging enableLogging: Bool) async -> Bool {
+    func grabResults(withLogging enableLogging: Bool) async {
         #if DEBUG
         print("URL: \(url.absoluteString)")
         #endif
@@ -51,14 +51,12 @@ struct Retailer: Identifiable {
         
         if statusCode != 200 {
             self.isAvailable = false
-            return false
         }
         if var result = result {
             result = result.lowercased()
             for phrase in unavailablePhrases {
                 if result.contains(phrase) {
                     self.isAvailable = false
-                    return false
                 }
             }
            
@@ -70,15 +68,13 @@ struct Retailer: Identifiable {
                 writeLog(for: result, of: url)
             }
             
-            if withSound {
+            if self.soundEnabled {
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_UserPreferredAlert))
             }
             self.isAvailable = true
-            return true
 
         } else {
             self.isAvailable = false
-            return false
         }
     }
     
