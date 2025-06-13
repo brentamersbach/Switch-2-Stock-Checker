@@ -15,18 +15,21 @@ class Retailer: Identifiable {
     var url: URL
     @AppStorage var soundEnabled: Bool
     var isAvailable: Bool
-    private let unavailablePhrases: [String] = ["confirm that you’re human", "out of stock", "not available", "in store only", "exclusively in stores"]
+    private var unavailablePhrases: [String] = ["out of stock", "not available", "in store only", "exclusively in stores"]
+    private var confirmationPhrases: [String] = []
     
-    init(named name: String, withURL url: String) {
+    init(named name: String, withURL url: String, addPhrases newPhrases: [String] = [], withConfirmation newConfirmPhrases: [String] = []) {
         self.name = name
         self.url = URL(string: url)!
         self.isAvailable = false
         self._soundEnabled = AppStorage(wrappedValue: true, "\(name).soundEnabled")
+        unavailablePhrases.append(contentsOf: newPhrases)
+        confirmationPhrases.append(contentsOf: newConfirmPhrases)
     }
     
     func grabResults(withLogging enableLogging: Bool) async {
         #if DEBUG
-        print("URL: \(url.absoluteString)")
+        print("\nURL: \(url.absoluteString)")
         #endif
         
         var content: String? = ""
@@ -53,7 +56,22 @@ class Retailer: Identifiable {
             if let content = content?.lowercased() {
                 for phrase in unavailablePhrases {
                     if content.contains(phrase) {
+                        #if DEBUG
+                        print("Found: \(phrase)")
+                        #endif
                         return
+                    }
+                }
+                if !confirmationPhrases.isEmpty {
+                    for phrase in confirmationPhrases {
+                        if content.contains(phrase) {
+                            #if DEBUG
+                            print("Found: \(phrase)")
+                            #endif
+                            continue
+                        } else {
+                            return
+                        }
                     }
                 }
                 #if DEBUG
@@ -75,7 +93,7 @@ class Retailer: Identifiable {
     func writeLog(for contents: String, of url: URL) {
         let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         let supportPath = paths[0].appending(component: "com.mac-anu.Switch-2-Stock-Checker")
-        let dateFormat = Date.ISO8601FormatStyle(dateSeparator: .omitted, dateTimeSeparator: .space, timeSeparator: .omitted, timeZone: TimeZone.current)
+        let dateFormat = Date.ISO8601FormatStyle(dateSeparator: .omitted, dateTimeSeparator: .space, timeSeparator: .omitted, includingFractionalSeconds: false, timeZone: TimeZone.current)
         let date = Date().formatted(dateFormat)
         let site = url.absoluteString.split(separator: ".")[1]
         let filename = "\(site) \(date).txt"
