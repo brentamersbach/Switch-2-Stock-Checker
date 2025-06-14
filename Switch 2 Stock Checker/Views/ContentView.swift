@@ -22,8 +22,12 @@ struct ContentView: View {
         Retailer(named: "GameStop", withURL: "https://www.gamestop.com/consoles-hardware/nintendo-switch/consoles/products/nintendo-switch-2/20019700.html"),
         Retailer(named: "Verizon", withURL: "https://www.verizon.com/products/nintendo-switch-2-light-blue-and-light-red/")
     ]
+    @State private var statuses: [String: Bool] = [:]
     
+    @State private var refresher: Bool = false
     @AppStorage("enableLogging") var enableLogging: Bool = false
+    
+    let grabber = Grabber()
     
     func refreshData() {
         #if DEBUG
@@ -31,21 +35,26 @@ struct ContentView: View {
         #endif
         Task {
             for i in retailers.indices {
-               await retailers[i].grabResults(withLogging: enableLogging)
+                let result = await grabber.grabResults(for: retailers[i], withLogging: enableLogging)
+                retailers[i].isAvailable = result
             }
+//            refresher.toggle()
         }
     }
     
     var body: some View {
         VStack(alignment:.leading) {
             ForEach($retailers, id: \.id) { $retailer in
-                RetailerView(retailer: $retailer)
+                RetailerView(retailer: $retailer, isAvailable: statuses[retailer.name] ?? false)
             }
             Divider()
             Toggle("Enable logging", isOn: $enableLogging)
         }
         .frame(width: 300)
         .task {
+            for retailer in (retailers) {
+                statuses[retailer.name] = false
+            }
             refreshData()
         }
         .onReceive(timer) { _ in

@@ -8,17 +8,23 @@
 import SwiftUI
 
 struct AvailableView: View {
+    @Binding var isAvailable: Bool
+    
     var body: some View {
         HStack {
             Circle()
-                .fill(Color.green)
+                .fill(isAvailable ? Color.green : Color.red)
                 .frame(width: 10, height: 10)
-            Text("Available")
+            Text(isAvailable ? "Available" : "Unavailable")
                 .bold()
         }
     }
 }
 
-#Preview {
-    AvailableView()
+struct AvailableView_Previews: PreviewProvider {
+    @State static var isAvailable = true
+    static var previews: some View {
+        AvailableView(isAvailable: $isAvailable)
+    }
+    
 }
