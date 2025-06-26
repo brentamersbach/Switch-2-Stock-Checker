@@ -25,6 +25,6 @@ struct AvailableView_Previews: PreviewProvider {
     @State static var isAvailable = true
     static var previews: some View {
         AvailableView(isAvailable: $isAvailable)
-    }
-    
+            .padding()
+    }    
 }

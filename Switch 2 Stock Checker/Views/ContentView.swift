@@ -24,22 +24,25 @@ struct ContentView: View {
     ]
     @State private var statuses: [String: Bool] = [:]
     
-    @State private var refresher: Bool = false
     @AppStorage("enableLogging") var enableLogging: Bool = false
+    
+    @State private var lastRefresh: String = ""
     
     let grabber = Grabber()
     
     func refreshData() {
-        #if DEBUG
-        print("Timer fired")
-        #endif
+        print("\n\n------------\n\nTimer fired")
+
         Task {
             for i in retailers.indices {
                 let result = await grabber.grabResults(for: retailers[i], withLogging: enableLogging)
                 retailers[i].isAvailable = result
             }
-//            refresher.toggle()
         }
+        lastRefresh = Date().formatted(date: .numeric, time: .standard)
+        #if DEBUG
+        print(lastRefresh)
+        #endif
     }
     
     var body: some View {
@@ -48,7 +51,12 @@ struct ContentView: View {
                 RetailerView(retailer: $retailer, isAvailable: statuses[retailer.name] ?? false)
             }
             Divider()
-            Toggle("Enable logging", isOn: $enableLogging)
+            HStack(alignment: .top) {
+                Toggle("Enable logging", isOn: $enableLogging)
+                Spacer()
+                Text("Last update:\n\(lastRefresh)")
+                    .multilineTextAlignment(.trailing)
+            }
         }
         .frame(width: 300)
         .task {

@@ -21,17 +21,14 @@ class Grabber {
         let unavailablePhrases: [String] = retailer.unavailablePhrases
         let confirmationPhrases: [String] = retailer.confirmationPhrases
         
-        #if DEBUG
         print("\nURL: \(url.absoluteString)")
-        #endif
         
         do {
             let (requestData, requestResponse) = try await URLSession.shared.data(from: url)
             if let requestResponse = requestResponse as? HTTPURLResponse {
                 statusCode = requestResponse.statusCode
-                #if DEBUG
+
                 print("Status: \(statusCode)")
-                #endif
             }
             if let requestString = String(data: requestData, encoding: .utf8) {
                 content = requestString
@@ -46,9 +43,7 @@ class Grabber {
             if let content = content?.lowercased() {
                 for phrase in unavailablePhrases {
                     if content.contains(phrase) {
-                        #if DEBUG
                         print("Found: \(phrase)")
-                        #endif
                         result = false
                         break
                     }
@@ -56,17 +51,13 @@ class Grabber {
                 if !confirmationPhrases.isEmpty && result == true {
                     for phrase in confirmationPhrases {
                         if !content.contains(phrase) {
-                            #if DEBUG
                             print("Not Found: \(phrase)")
-                            #endif
                             result = false
                         }
                     }
                 }
                 if result {
-                    #if DEBUG
                     print("Hit!")
-                    #endif
 
                     if enableLogging {
                         writeLog(for: content, of: url)

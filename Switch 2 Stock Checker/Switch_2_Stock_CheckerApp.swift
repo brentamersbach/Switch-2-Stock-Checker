@@ -10,7 +10,7 @@ import SwiftUI
 @main
 struct Switch_2_Stock_CheckerApp: App {
     var body: some Scene {
-        WindowGroup {
+        Window("Switch 2 Stock Checker", id: "Main") {
             ContentView()
         }
         .windowResizability(.contentSize)

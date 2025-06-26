@@ -9,7 +9,7 @@ import SwiftUI
 
 struct RetailerView: View {
     @Binding var retailer: Retailer
-    var isAvailable: Bool
+    @State var isAvailable: Bool
     let speakerImage = Image(systemName: "speaker.wave.3")
     let muteImage = Image(systemName: "speaker.slash")
     
@@ -18,12 +18,8 @@ struct RetailerView: View {
             Text("\(retailer.name): ")
                 .frame(width: 70, alignment: .leading)
             Spacer()
-            AvailableView(isAvailable: $retailer.isAvailable)
-//            if retailer.isAvailable == false {
-//                UnavailableView()
-//            } else {
-//                AvailableView()
-//            }
+            AvailableView(isAvailable: $isAvailable)
+
             Link("Go", destination: retailer.url)
                 .focusable(false)
             Spacer()
@@ -34,6 +30,12 @@ struct RetailerView: View {
     }
 }
 
-//#Preview {
-//    RetailerView()
-//}
+struct RetailerView_Previews: PreviewProvider {
+    @State static var retailer = Retailer(named: "Walmart", withURL: "https://www.walmart.com")
+    @State static var isAvailable = true
+    static var previews: some View {
+        RetailerView(retailer: $retailer, isAvailable: isAvailable)
+            .frame(width: 300)
+            .padding()
+    }
+}
